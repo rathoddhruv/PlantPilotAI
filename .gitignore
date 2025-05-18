@@ -1,0 +1,19 @@
+# Ignore data and models
+data/
+model/
+
+# Python virtualenv
+venv/
+
+# Label Studio exports
+*.csv
+*.json
+*.xml
+
+# VS Code junk
+.vscode/
+*.code-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
