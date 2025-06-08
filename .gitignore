@@ -13,6 +13,9 @@ venv/
 *.csv
 *.json
 *.xml
+*.pt
+*.weights
+runs/
 
 # VS Code junk
 .vscode/
