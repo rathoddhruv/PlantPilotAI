@@ -9,7 +9,7 @@ from pathlib import Path
 # config
 DATA_DIR = "data"
 BATCH_SIZE = 16
-NUM_EPOCHS = 10
+NUM_EPOCHS = 50
 NUM_CLASSES = len(os.listdir(os.path.join(DATA_DIR, "train")))
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_PATH = "model/plant_classifier.pth"
