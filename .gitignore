@@ -1,6 +1,10 @@
 # Ignore data and models
 data/
 model/
+flattened_images/
+venv/
+venv311/
+runs/
 
 # Python virtualenv
 venv/
