@@ -17,8 +17,7 @@ with open(json_file, "r", encoding="utf-8") as f:
 
 class_map = {
     "Dandelions": 0,
-    "Hydrangea": 1,
-    "Dandelions": 2
+    # "Hydrangea": 1
 }
 
 
