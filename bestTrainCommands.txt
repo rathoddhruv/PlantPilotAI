@@ -1,0 +1,5 @@
+yolo task=detect mode=train model=yolov8s.pt data=yolo_dataset.yaml imgsz=960 epochs=50 device=0 cfg=custom_train.yaml
+
+yolo task=detect mode=train model=yolov8s.pt data=yolo_dataset.yaml imgsz=1280 epochs=50 device=0
+
+what i learn is for this 2 flower D and H, yolov8s is working fine and obj detection with B_box

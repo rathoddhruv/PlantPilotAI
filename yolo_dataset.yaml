@@ -3,6 +3,5 @@ train: images/train
 val: images/val
 
 names:
-  0: taraxacum
+  0: dandelion
   1: hydrangea
-  2: other

@@ -2,24 +2,39 @@
 data/
 model/
 flattened_images/
+
+# Python virtual environments
 venv/
 venv311/
-runs/
+.venv/
 
-# Python virtualenv
-venv/
+# Ignore all YOLO training outputs
+# ignore everything in runs
+runs/*
+# but keep all nested detect folders
+!runs/detect/
+!runs/detect/**/
+# and keep all best.pt files in any subfolder
+!runs/detect/**/best.pt
+
+
+
 
 # Label Studio exports
 *.csv
 *.json
 *.xml
-*.pt
 *.weights
 
-# VS Code junk
+# Ignore all .pt files
+*.pt
+# ...but keep specific ones
+!yolov8n-seg.pt
+
+# VS Code settings
 .vscode/
 *.code-workspace
 
-# OS junk
+# OS system files
 .DS_Store
 Thumbs.db
