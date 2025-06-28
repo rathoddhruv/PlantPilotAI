@@ -1,0 +1,6 @@
+TRAIN 
+yolo task=detect mode=train model=yolov8s.pt data=yolo_dataset.yaml imgsz=960 epochs=50 device=0 cfg=custom_train.yaml
+
+
+DETECT
+yolo task=detect mode=predict model=runs/detect/train2/weights/best.pt source=data/yolo_dataset/images/val imgsz=960 conf=0.2 device=0
