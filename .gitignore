@@ -10,7 +10,7 @@ venv311/
 
 # Ignore all YOLO training outputs
 # ignore everything in runs
-runs/*
+runs/**/*
 # but keep all nested detect folders
 !runs/detect/
 !runs/detect/**/
