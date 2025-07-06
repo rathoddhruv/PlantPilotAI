@@ -26,7 +26,32 @@ summary = []
 # === Active Learning Prediction Loop ===
 for img_path in image_paths:
     print(f"\n🔍 Predicting on: {img_path.name}")
-    results = model.predict(source=str(img_path), imgsz=imgsz, conf=0.05, save=True)
+    results = model.predict(source=str(img_path), imgsz=960, conf=0.05)
+    result = results[0]
+    img = cv2.imread(str(img_path))
+    names = result.names
+
+    for cls_id, conf, xyxy in zip(
+        result.boxes.cls, result.boxes.conf, result.boxes.xyxy
+    ):
+        x1, y1, x2, y2 = map(int, xyxy)
+        label = f"{names[int(cls_id)]} {conf:.2f}"
+
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(
+            img,
+            label,
+            (x1, y1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.2,  # font size
+            (0, 255, 0),
+            3,
+        )
+
+    cv2.imshow(f"Prediction - {img_path.name}", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
     result = results[0]
     row = [img_path.name]
 

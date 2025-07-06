@@ -13,7 +13,7 @@ cache: false
 device: '0'
 workers: 8
 project: null
-name: plant_detector_boosted
+name: plant_detector_boosted2
 exist_ok: false
 pretrained: true
 optimizer: auto
@@ -102,4 +102,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: C:\Data\Projects\PlantPilotAI\runs\detect\plant_detector_boosted
+save_dir: C:\Data\Projects\PlantPilotAI\runs\detect\plant_detector_boosted2
