@@ -1,3 +1,4 @@
+
 import os
 import cv2
 import shutil
@@ -42,16 +43,7 @@ summary = []
 # === Active Learning Prediction Loop ===
 for img_path in image_paths:
     print(f"\n🔍 Predicting on: {img_path.name}")
-    results = model.predict(
-        source=str(img_path),
-        imgsz=imgsz,
-        conf=0.05,
-        save=True,
-        save_dir=str(save_dir),
-        line_thickness=1,  # thinner boxes
-        show_labels=True,
-        show_conf=True,
-    )
+    results = model.predict(source=str(img_path), imgsz=imgsz, conf=0.05, save=True, save_dir=str(save_dir), line_thickness=3)
 
     result = results[0]
     row = [img_path.name]
@@ -64,9 +56,7 @@ for img_path in image_paths:
         scores = boxes.conf.tolist()
         xywhn = boxes.xywhn.tolist()
 
-        detections = sorted(
-            zip(classes, scores, xywhn), key=lambda x: x[1]
-        )  # low to high confidence
+        detections = sorted(zip(classes, scores, xywhn), key=lambda x: x[1])
 
         detected_labels = []
         skip_image = False
@@ -84,69 +74,13 @@ for img_path in image_paths:
                 continue
 
             result_img_path = Path(result.save_dir) / img_path.name
-            if not already_shown:
-                img = cv2.imread(str(img_path))
-                for cls_id, conf, box_xyxy in zip(
-                    result.boxes.cls, result.boxes.conf, result.boxes.xyxy
-                ):
-                    cls_id = int(cls_id)
-                    label = f"{names[cls_id]} {conf:.2f}"
-                    x1, y1, x2, y2 = map(int, box_xyxy.tolist())
+            if not already_shown and result_img_path.exists():
+                subprocess.Popen([acdsee_path, str(result_img_path)], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                already_shown = True
 
-                    # draw bounding box
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 3)
-
-                    # draw label above the box
-                    text_size = cv2.getTextSize(
-                        label, cv2.FONT_HERSHEY_SIMPLEX, 2.0, 3
-                    )[0]
-                    text_x = x1
-                    text_y = max(y1 - 10, text_size[1] + 10)
-
-                    font_scale = 5
-                    font_thickness = 5
-                    text_color = (0, 255, 0)
-
-                    cv2.putText(
-                        img,
-                        label,
-                        (text_x, text_y),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        font_scale,
-                        text_color,
-                        font_thickness,
-                    )
-
-                save_path = save_dir / img_path.name
-                USE_ACDSEE = True
-                if USE_ACDSEE:
-                    subprocess.Popen(
-                        f'"{acdsee_path}" "{str(result_img_path)}"',
-                        shell=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                else:
-                    img = cv2.imread(str(save_path))
-                    if img is not None:
-                        screen_width = 1200
-                        if img.shape[1] > screen_width:
-                            scale = screen_width / img.shape[1]
-                            new_size = (
-                                int(img.shape[1] * scale),
-                                int(img.shape[0] * scale),
-                            )
-                            img = cv2.resize(img, new_size)
-
-                        cv2.imshow(f"Prediction - {img_path.name}", img)
-                        cv2.waitKey(1)
-
-            print(
-                f"❓ Review: {label} ({conf_pct}%) - (y = correct, w = wrong, s = all correct, c = skip, n = rest wrong, a = rest correct, b = rest wrong): ",
-                end="",
-            )
-
+            print(f"❓ Review: {label} ({conf_pct}%) - (y = correct, w = wrong, s = all correct, c = skip, n = rest wrong, a = rest correct, b = rest wrong): ", end="")
             choice = input().strip().lower()
+
             if choice == "s":
                 skip_as_correct = True
                 break
@@ -162,25 +96,25 @@ for img_path in image_paths:
             elif choice == "b":
                 mark_rest_as_wrong = True
                 break
-
             elif choice == "y":
                 label_file = active_label_dir / f"{img_path.stem}.txt"
                 with open(label_file, "a") as f:
                     f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
                 print(f"✅ Saved to active_labels: {label_file}")
+                shutil.copy(str(img_path), "data/yolo_merged/images/train")
             elif choice == "w":
                 label_file = wrong_label_dir / f"{img_path.stem}.txt"
                 with open(label_file, "a") as f:
                     f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
                 print(f"❌ Marked as incorrect in: {label_file}")
 
-                # === bulk labeling logic ===
         if skip_as_correct:
             label_file = active_label_dir / f"{img_path.stem}.txt"
             for cls_id, conf, box in detections:
                 with open(label_file, "a") as f:
                     f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
             print(f"✅ All detections saved as correct for: {img_path.name}")
+            shutil.copy(str(img_path), "data/yolo_merged/images/train")
 
         elif skip_all_others_wrong:
             label_file = wrong_label_dir / f"{img_path.stem}.txt"
@@ -204,6 +138,7 @@ for img_path in image_paths:
             print(f"❌ Remaining detections marked as wrong for: {img_path.name}")
 
         row.append(", ".join(detected_labels) if detected_labels else "Uncertain")
+
     else:
         print("⚠️ No detections. Label manually? (y/n): ", end="")
         row.append("None")

@@ -1,40 +1,44 @@
-# Ignore data and models
+# === DATA & LABELS ===
 data/
-model/
+active_labels/
+wrong_labels/
+active_review/
+runs/active_review_output/
 flattened_images/
 
-# Python virtual environments
+# allow YAML config for YOLO
+!data/yolo_merged.yaml
+!yolo_dataset.yaml
+!custom_train.yaml
+
+# === YOLO Training Outputs ===
+runs/**/*
+!runs/detect/
+!runs/detect/**/
+!runs/detect/**/best.pt
+
+# === PyTorch Checkpoints ===
+*.pt
+!yolov8n-seg.pt  # if this is your reference model
+
+# === Virtual Environments ===
 venv/
 venv311/
 .venv/
 
-# Ignore all YOLO training outputs
-# ignore everything in runs
-runs/**/*
-# but keep all nested detect folders
-!runs/detect/
-!runs/detect/**/
-# and keep all best.pt files in any subfolder
-!runs/detect/**/best.pt
+# === Editor and OS-specific Files ===
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
 
-
-
-
-# Label Studio exports
+# === Label Studio or Export Files ===
 *.csv
 *.json
 *.xml
 *.weights
 
-# Ignore all .pt files
-*.pt
-# ...but keep specific ones
-!yolov8n-seg.pt
-
-# VS Code settings
-.vscode/
-*.code-workspace
-
-# OS system files
-.DS_Store
-Thumbs.db
+# === Temporary / Cache Files ===
+__pycache__/
+*.log
+*.tmp
