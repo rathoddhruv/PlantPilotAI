@@ -5,14 +5,17 @@ import torch.optim as optim
 from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader
 from pathlib import Path
+from config_loader import CLASS_MAP, CLASS_NAMES, CLASS_MAP_REVERSE
+
 
 # config
 DATA_DIR = "data"
 BATCH_SIZE = 16
 NUM_EPOCHS = 50
-NUM_CLASSES = len(os.listdir(os.path.join(DATA_DIR, "train")))
+NUM_CLASSES = len(CLASS_NAMES)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_PATH = "model/plant_classifier.pth"
+
 
 # data transforms
 transform = transforms.Compose([

@@ -1,14 +1,26 @@
 import shutil
 from pathlib import Path
 import random
+import yaml
+from config_loader import (
+    CLASS_NAMES,
+    CLASS_MAP,
+    CLASS_MAP_REVERSE,
+    ORIGINAL_IMAGES,
+    ORIGINAL_LABELS,
+    ACTIVE_LABEL_DIR,
+    TEST_IMAGE_FOLDER,
+    MERGED_DATASET_ROOT,
+    YOLO_DATASET_YAML
+)
 
 # === CONFIG ===
-original_images = Path("data/yolo_dataset/images/train")
-original_labels = Path("data/yolo_dataset/labels/train")
-active_labels = Path("active_labels")
-test1_images = Path("C:/Data/Projects/test-1")  # NEW: path for test-1 reviewed images
+original_images = ORIGINAL_IMAGES
+original_labels = ORIGINAL_LABELS
+active_labels = ACTIVE_LABEL_DIR
+test1_images = TEST_IMAGE_FOLDER
 
-merged_root = Path("data/yolo_merged")
+merged_root = MERGED_DATASET_ROOT
 merged_train_images = merged_root / "images/train"
 merged_val_images = merged_root / "images/val"
 merged_train_labels = merged_root / "labels/train"
@@ -61,6 +73,18 @@ for f in active_files:
                 print(f"⏭️ skipped (already exists): {img_file.name}")
             break
 
+# === GENERATE YOLO DATASET YAML ===
+dataset_yaml = {
+    "path": str(merged_root),
+    "train": "images/train",
+    "val": "images/val",
+    "names": {idx: name for idx, name in CLASS_MAP_REVERSE.items()}
+}
+
+with open(YOLO_DATASET_YAML, "w") as f:
+    yaml.dump(dataset_yaml, f, sort_keys=False)
+
 print(f"✅ {len(train_files)} train + {len(val_files)} val images copied")
 print(f"✅ {len(active_files)} active labels injected with images from test-1")
+print(f"✅ yolo_dataset.yaml generated at {YOLO_DATASET_YAML}")
 print("🎯 dataset folder: data/yolo_merged")

@@ -1,4 +1,3 @@
-
 import os
 import cv2
 import shutil
@@ -6,17 +5,18 @@ from ultralytics import YOLO
 from pathlib import Path
 from tabulate import tabulate
 import subprocess
+from config_loader import CLASS_NAMES, CLASS_MAP, MODEL_PATH, TEST_IMAGE_FOLDER, ACDSEE_PATH, ACTIVE_LABEL_DIR, MANUAL_REVIEW_DIR, WRONG_LABEL_DIR, SAVE_DIR, UNCERTAIN_THRESHOLD, MERGED_DATASET_ROOT
 
 # === CONFIG ===
-model_path = r"runs/detect/plant_detector_boosted/weights/best.pt"
-image_folder = r"C:\Data\Projects\test-1"
-active_label_dir = Path("active_labels")
-manual_review_dir = Path("active_review")
-wrong_label_dir = Path("wrong_labels")
-save_dir = Path("runs/active_review_output")
+model_path = MODEL_PATH
+image_folder = TEST_IMAGE_FOLDER
+active_label_dir = ACTIVE_LABEL_DIR
+manual_review_dir = MANUAL_REVIEW_DIR
+wrong_label_dir = WRONG_LABEL_DIR
+save_dir = SAVE_DIR
 imgsz = 960
-uncertain_threshold = 0.35
-acdsee_path = r"C:\Program Files\ACD Systems\ACDSee Pro\6.0\ACDSeePro6.exe"
+uncertain_threshold = UNCERTAIN_THRESHOLD
+acdsee_path = ACDSEE_PATH
 
 # === Prepare folders ===
 save_dir.mkdir(exist_ok=True, parents=True)
@@ -101,7 +101,7 @@ for img_path in image_paths:
                 with open(label_file, "a") as f:
                     f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
                 print(f"✅ Saved to active_labels: {label_file}")
-                shutil.copy(str(img_path), "data/yolo_merged/images/train")
+                shutil.copy(str(img_path), MERGED_DATASET_ROOT / "images/train")
             elif choice == "w":
                 label_file = wrong_label_dir / f"{img_path.stem}.txt"
                 with open(label_file, "a") as f:
@@ -114,7 +114,7 @@ for img_path in image_paths:
                 with open(label_file, "a") as f:
                     f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
             print(f"✅ All detections saved as correct for: {img_path.name}")
-            shutil.copy(str(img_path), "data/yolo_merged/images/train")
+            shutil.copy(str(img_path), MERGED_DATASET_ROOT / "images/train")
 
         elif skip_all_others_wrong:
             label_file = wrong_label_dir / f"{img_path.stem}.txt"

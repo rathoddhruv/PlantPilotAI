@@ -1,7 +1,6 @@
-path: data/yolo_dataset
+path: data\yolo_dataset
 train: images/train
-val: images/val
-
+val: images/train
 names:
   0: dandelion
   1: hydrangea
