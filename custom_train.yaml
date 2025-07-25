@@ -10,7 +10,7 @@ data: yolo_dataset.yaml  # path to your dataset config file
 
 # training strategy
 imgsz: 1280           # image input size during training (should match prediction size too)
-# epochs: 100           # total training epochs
+epochs: 50           # total training epochs
 batch: 8              # number of images per batch (adjust if you run out of GPU memory)
 device: 0             # use GPU 0 (your RTX 3090)
 patience: 40          # early stopping: if val loss doesn't improve for X epochs, stop
