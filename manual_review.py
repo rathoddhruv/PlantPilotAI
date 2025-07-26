@@ -131,7 +131,7 @@ while current_index < len(image_paths):
             idx += 1
             continue
         label = names[int(cls_id)]
-        conf_pct = round(conf * 100, 1)
+        conf_pct = f"{conf * 100:.3f}"
         if not review_all and conf >= UNCERTAIN_THRESHOLD:
             idx += 1
             continue
@@ -188,3 +188,37 @@ while current_index < len(image_paths):
 
 print("\nSummary:")
 print(tabulate(summary, headers=["Image", "Detections"], tablefmt="grid"))
+
+
+
+
+def draw_labels_with_full_conf(image_path, detections, names, output_path):
+    import cv2
+
+    image = cv2.imread(str(image_path))
+    for cls_id, conf, box in detections:
+        label = names[int(cls_id)]
+        conf_text = f"{label} ({conf * 100:.6f}%)"
+
+        cx, cy, w, h, angle = box
+        # Estimate rectangle corners (you can improve this later with rotation)
+        x = int(cx - w / 2)
+        y = int(cy - h / 2)
+        x2 = int(cx + w / 2)
+        y2 = int(cy + h / 2)
+
+        # Draw box
+        cv2.rectangle(image, (x, y), (x2, y2), (0, 255, 0), 2)
+        # Draw label
+        cv2.putText(
+            image,
+            conf_text,
+            (x, y - 5),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 255, 255),
+            1,
+            cv2.LINE_AA
+        )
+
+    cv2.imwrite(str(output_path), image)

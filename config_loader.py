@@ -27,6 +27,7 @@ DEFAULT_OBB_MODEL = get_path("DEFAULT_OBB_MODEL", "runs/obb/train/weights/best.p
 MODEL_PATH = get_path("MODEL_PATH", "runs/obb/train/weights/best.pt")  # universal
 
 # === INPUT + REVIEW PATHS ===
+# this is only for reading — nothing in the code should delete from it
 TEST_IMAGE_FOLDER = get_path("TEST_IMAGE_FOLDER", "C:/Data/Projects/test-1")
 CLASS_FILE = get_path("CLASS_FILE", "class_names.txt")
 ORIGINAL_IMAGES = get_path("ORIGINAL_IMAGES", "data/yolo_dataset/images/train")
