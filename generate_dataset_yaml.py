@@ -12,7 +12,7 @@ yaml_data = {
     "names": {idx: name for idx, name in CLASS_MAP_REVERSE.items()},
 }
 
-out_path = Path("yolo_dataset.yaml")
+out_path = Path("yolo_merged.yaml")
 with out_path.open("w") as f:
     yaml.dump(yaml_data, f, sort_keys=False)
 

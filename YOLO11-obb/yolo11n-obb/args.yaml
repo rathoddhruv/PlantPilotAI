@@ -1,7 +1,7 @@
 task: obb
 mode: train
 model: yolo11n-obb.pt
-data: yolo_dataset.yaml
+data: yolo_merged.yaml
 epochs: 200
 time: null
 patience: 50

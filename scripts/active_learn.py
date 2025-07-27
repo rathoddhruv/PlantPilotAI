@@ -3,8 +3,8 @@ from ultralytics import YOLO
 from pathlib import Path
 
 model = YOLO("runs/detect/plant_detector_clean/weights/best.pt")
-image_folder = Path("data/yolo_dataset/images/unlabeled")
-label_folder = Path("data/yolo_dataset/labels/train")
+image_folder = Path("data/yolo_merged/images/unlabeled")
+label_folder = Path("data/yolo_merged/labels/train")
 label_folder.mkdir(parents=True, exist_ok=True)
 
 for img_path in image_folder.glob("*.jpg"):

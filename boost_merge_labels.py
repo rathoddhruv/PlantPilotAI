@@ -16,26 +16,6 @@ from config_loader import (
     WRONG_LABEL_DIR,
 )
 
-
-def clean_yolo_merged() -> None:
-    """Clean the merged YOLO dataset directories.
-
-    This removes any existing images and labels in ``data/yolo_merged/images/train``
-    and ``data/yolo_merged/labels/train`` before starting a fresh merge. The
-    directories are recreated so subsequent copy operations will succeed.
-    """
-    # Use plain-text logging rather than emoji to keep output professional
-    print("Cleaning data/yolo_merged/images/train and labels/train...")
-    for sub in ["images/train", "labels/train"]:
-        path = Path("data/yolo_merged") / sub
-        if path.exists():
-            shutil.rmtree(path)
-        path.mkdir(parents=True, exist_ok=True)
-
-
-# Prepare clean merged dataset
-clean_yolo_merged()
-
 merged_root = MERGED_DATASET_ROOT
 merged_images = merged_root / "images/train"
 merged_labels = merged_root / "labels/train"
@@ -83,6 +63,7 @@ for label_path in active_files:
         image_path = TEST_IMAGE_FOLDER / f"{label_path.stem}{ext}"
         if image_path.exists():
             shutil.copy(image_path, merged_images / image_path.name)
+            image_path.unlink()  # delete from test folder
             copied_images += 1
             break
 
@@ -116,11 +97,10 @@ for wrong_path in wrong_files:
             # Avoid overwriting if this image was already copied as a positive
             if not dest_img.exists():
                 shutil.copy(image_path, dest_img)
-            # DO NOT DELETE from test folder
-            # try:
-            #     image_path.unlink()
-            # except Exception:
-            #     pass
+            try:
+                image_path.unlink()  # remove from test folder
+            except Exception:
+                pass
             negative_copied += 1
             break
 

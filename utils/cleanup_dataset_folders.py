@@ -3,8 +3,8 @@ import shutil
 
 # folders to clean
 folders_to_clean = [
-    Path("data/yolo_dataset/images/train"),
-    Path("data/yolo_dataset/labels/train"),
+    Path("data/yolo_merged/images/train"),
+    Path("data/yolo_merged/labels/train"),
     Path("data/yolo_merged/images/train"),
     Path("data/yolo_merged/images/val"),  # we don't use val, but still safe to clean
 ]

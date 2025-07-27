@@ -6,7 +6,7 @@ mode: train           # training mode
 
 # model and dataset info
 # model: yolov8l.pt     # large model for better accuracy (use yolov8s.pt for Jetson or low-VRAM)
-data: yolo_dataset.yaml  # path to your dataset config file
+data: yolo_merged.yaml  # path to your dataset config file
 
 # training strategy
 imgsz: 1280           # image input size during training (should match prediction size too)

@@ -155,8 +155,8 @@ while current_index < len(image_paths):
             shutil.copy(str(img_path), MERGED_DATASET_ROOT / "images/train")
             detected_labels.append(f"{label} ✅")
         elif ans in ["w", "wrong"]:
-            with open(WRONG_LABEL_DIR / f"{img_path.stem}.txt", "a") as f:
-                f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
+            detections.pop(idx)
+            idx -= 1  # stay on same index since list is now shorter
             detected_labels.append(f"{label} ❌")
         elif ans == "y1":
             for i, (cid, _, b) in enumerate(detections):
@@ -167,12 +167,14 @@ while current_index < len(image_paths):
             shutil.copy(str(img_path), MERGED_DATASET_ROOT / "images/train")
             detected_labels.append(f"{label} class ✅")
         elif ans == "w1":
-            for i, (cid, _, b) in enumerate(detections):
+            to_remove = []
+            for i, (cid, _, _) in enumerate(detections):
                 if cid == cls_id and i not in handled:
-                    with open(WRONG_LABEL_DIR / f"{img_path.stem}.txt", "a") as f:
-                        f.write(f"{int(cid)} {' '.join(map(str, b))}\n")
-                    handled.add(i)
+                    to_remove.append(i)
+            for i in sorted(to_remove, reverse=True):
+                detections.pop(i)
             detected_labels.append(f"{label} class ❌")
+            handled.update(to_remove)
         else:
             print("Invalid input.")
             continue
@@ -181,15 +183,27 @@ while current_index < len(image_paths):
         idx += 1
 
     if idx >= len(detections):
+        # 💾 Save updated labels (after filtering with w/w1)
+        label_file_path = ACTIVE_LABEL_DIR / f"{img_path.stem}.txt"
+        if detections:
+            with open(label_file_path, "w") as f:
+                for det in detections:
+                    cls_id, _, box = det
+                    f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
+            shutil.copy(str(img_path), MERGED_DATASET_ROOT / "images/train")
+        else:
+            # No valid detections left — optional manual review or skip
+            print("No valid detections left. Keeping image without label.")
+            label_file_path.unlink(missing_ok=True)
+
         row.append(", ".join(detected_labels))
         summary.append(row)
         current_index += 1
         cv2.destroyAllWindows()
 
+
 print("\nSummary:")
 print(tabulate(summary, headers=["Image", "Detections"], tablefmt="grid"))
-
-
 
 
 def draw_labels_with_full_conf(image_path, detections, names, output_path):

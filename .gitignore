@@ -3,23 +3,34 @@ data/
 active_labels/
 wrong_labels/
 active_review/
-runs/active_review_output/
 flattened_images/
+runs/active_review_output/
+temp/ls_extract/
+label_studio_exports/
 
-# allow YAML config for YOLO
+# Allow important YAML config files
 !data/yolo_merged.yaml
-!yolo_dataset.yaml
+!yolo_merged.yaml
 !custom_train.yaml
+!yolo_dataset.yaml
 
 # === YOLO Training Outputs ===
 runs/**/*
 !runs/detect/
 !runs/detect/**/
 !runs/detect/**/best.pt
+!runs/obb/
+!runs/obb/**/best.pt
+
+# === YOLO Experiments You Keep ===
+!YOLO11-obb/
+!YOLO11-obb/**/weights/
+!YOLO11-obb/**/args.yaml
+!YOLO11-obb/**/labels.jpg
 
 # === PyTorch Checkpoints ===
 *.pt
-!yolov8n-seg.pt  # if this is your reference model
+!yolov8n-seg.pt  # keep if it's your reference model
 
 # === Virtual Environments ===
 venv/
@@ -37,8 +48,21 @@ Thumbs.db
 *.json
 *.xml
 *.weights
+*.zip
 
 # === Temporary / Cache Files ===
 __pycache__/
 *.log
 *.tmp
+
+# === Ignore Output Images from Review or Predict ===
+*.jpg
+*.jpeg
+*.png
+# Ignore all runs but keep YOLO11 experiments
+runs/**/*
+!YOLO11-obb/
+!YOLO11-obb/**/
+!YOLO11-obb/**/args.yaml
+!YOLO11-obb/**/labels.jpg
+!YOLO11-obb/**/weights/
