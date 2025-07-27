@@ -21,31 +21,29 @@ parser.add_argument(
 args = parser.parse_args()
 
 # === STEP 0.5: Train Model ===
-from pathlib import Path
-
 dataset_root = Path("data/yolo_merged")
 dataset_yaml = "yolo_merged.yaml"
 
 initial_images = Path("data/yolo_dataset/images/train")
 initial_labels = Path("data/yolo_dataset/labels/train")
 
-if any(initial_images.glob("*")) and any(initial_labels.glob("*.txt")):
+valid_initial_labels = [f for f in initial_labels.glob("*.txt") if f.stat().st_size > 0]
+if any(initial_images.glob("*")) and valid_initial_labels:
     print(
         "📦 Detected initial Label Studio dataset. Training from yolo_dataset directly..."
     )
 
     dataset_yaml = "yolo_dataset.yaml"
 
-    # clean backups
     for txt_file in initial_labels.glob("*.bak"):
         txt_file.unlink()
 
     print("🚀 Starting YOLO training with initial dataset...")
     train_args = [
         "yolo",
-        "task=obb",
+        "task=detect",
         "mode=train",
-        f"model=yolov8n-obb.pt",
+        "model=yolov8n.pt",
         f"data={dataset_yaml}",
         "imgsz=960",
         "device=0",
@@ -56,37 +54,31 @@ if any(initial_images.glob("*")) and any(initial_labels.glob("*.txt")):
     ]
     subprocess.run(train_args)
 
-    # move to yolo_dataset_used
     USED_PATH = Path("data/yolo_dataset_used")
     if USED_PATH.exists():
         shutil.rmtree(USED_PATH)
     shutil.move("data/yolo_dataset", USED_PATH)
     print("✅ Renamed yolo_dataset → yolo_dataset_used")
 
-    # re-run pipeline from here
     print("🔁 Restart the script to continue active learning phase from merged labels")
     sys.exit(0)
-
 else:
     print("⚠️ No initial dataset found. Proceeding with active learning flow...")
     dataset_yaml = "yolo_merged.yaml"
 
-# === CLEAN FOLDERS IF NEEDED ===
 if args.clean:
     print("🧹 Cleaning dataset folders before starting pipeline...")
     subprocess.run([sys.executable, "cleanup_dataset_folders.py"])
 else:
     print("⚠️ Skipping dataset cleanup (default behavior, no --clean flag)")
 
-# === FOLDER PATHS ===
 merged_images = MERGED_DATASET_ROOT / "images/train"
 merged_labels = MERGED_DATASET_ROOT / "labels/train"
 train_images = list(merged_images.glob("*"))
 train_labels = list(merged_labels.glob("*.txt"))
 
 
-# === STEP 1: Select model ===
-def get_latest_model_path(base_dir="runs/obb"):
+def get_latest_model_path(base_dir="runs/detect"):
     base_dir = Path(base_dir)
     run_dirs = sorted(
         [d for d in base_dir.iterdir() if d.is_dir()],
@@ -107,8 +99,6 @@ except Exception as e:
     print(f"❌ No trained model found: {e}")
     sys.exit(1)
 
-
-# === STEP 2: Launch Review Tool ===
 print("🔍 Launching manual_review.py...")
 try:
     subprocess.run([sys.executable, "manual_review.py"], check=True)
@@ -116,15 +106,13 @@ except Exception as e:
     print(f"❌ manual_review.py failed: {e}")
     sys.exit(1)
 
-# === STEP 3: Merge Labels ===
 print("🧪 Running boost_merge_labels.py...")
 if subprocess.run([sys.executable, "boost_merge_labels.py"]).returncode != 0:
     print("❌ boost_merge_labels.py failed")
     sys.exit(1)
 
-# === STEP 4: Backup old run ===
-TRAIN_DIR = Path("runs/obb/train")
-BACKUP_DIR = Path("runs/obb/previous-train")
+TRAIN_DIR = Path("runs/detect/train")
+BACKUP_DIR = Path("runs/detect/previous-train")
 
 if TRAIN_DIR.exists():
     if BACKUP_DIR.exists():
@@ -133,11 +121,9 @@ if TRAIN_DIR.exists():
     shutil.move(str(TRAIN_DIR), str(BACKUP_DIR))
     print("🔄 Renamed train → previous-train")
 
-# === CHECK FOR VALID LABELS ===
 valid_labels = [f for f in merged_labels.glob("*.txt") if f.stat().st_size > 0]
 print(f"🔍 Valid label files found: {len(valid_labels)}")
 
-# also check for matching images
 unmatched_labels = []
 for label_file in valid_labels:
     image_file = merged_images / (label_file.stem + ".jpg")
@@ -155,8 +141,6 @@ if len(valid_labels) == 0:
     print("❌ No valid label files found. Training skipped.")
     sys.exit(1)
 
-# === STEP 5: Train Model ===
-# Delete any leftover .bak files from label corrections
 for txt_file in merged_labels.glob("*.bak"):
     txt_file.unlink()
     print(f"🗑️ Deleted leftover backup file: {txt_file.name}")
@@ -167,7 +151,7 @@ else:
     print(f"✅ Found {len(train_images)} images and {len(train_labels)} labels.")
     train_args = [
         "yolo",
-        "task=obb",
+        "task=detect",
         "mode=train",
         f"model={str(MODEL_PATH)}",
         f"data={dataset_yaml}",
@@ -184,8 +168,7 @@ else:
         print("❌ YOLO training failed to execute properly.")
         sys.exit(1)
 
-    # === STEP 6: Update model if needed ===
-    final_best = Path("runs/obb/train/weights/best.pt")
+    final_best = Path("runs/detect/train/weights/best.pt")
     target_model = CONFIG_MODEL_PATH
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_model = Path(f"temp/last_model_{timestamp}.pt")
@@ -203,19 +186,17 @@ else:
     else:
         print("❌ Training finished, but no best.pt found at expected location.")
         print("🧹 Cleaning up broken run folder...")
-        shutil.rmtree("runs/obb/train", ignore_errors=True)
+        shutil.rmtree("runs/detect/train", ignore_errors=True)
 
-# === STEP 7: Evaluate Model ===
 eval_dir = Path("eval_output")
 shutil.rmtree(eval_dir / "post_active_learning", ignore_errors=True)
 eval_dir.mkdir(parents=True, exist_ok=True)
 
 if CONFIG_MODEL_PATH.exists():
     print(f"📊 Evaluating {len(train_images)} images using updated model...")
-
     eval_args = [
         "yolo",
-        "task=obb",
+        "task=detect",
         "mode=predict",
         f"model={CONFIG_MODEL_PATH}",
         f"source={merged_images}",
@@ -230,7 +211,6 @@ if CONFIG_MODEL_PATH.exists():
         "name=post_active_learning",
         "exist_ok=True",
     ]
-
     subprocess.run(eval_args)
 else:
     print(f"⚠️ Skipping evaluation — model not found at {CONFIG_MODEL_PATH}")
