@@ -1,11 +1,14 @@
 import zipfile
 from pathlib import Path
 import shutil
+import subprocess
+import sys
 
 EXPORTS_DIR = Path("label_studio_exports")
-DEST_IMAGES = Path("data/yolo_merged/images/train")
-DEST_LABELS = Path("data/yolo_merged/labels/train")
-DEST_META = Path("data/yolo_merged")
+YOLO_DATASET_ROOT = Path("data/yolo_dataset")
+DEST_IMAGES = YOLO_DATASET_ROOT / "images/train"
+DEST_LABELS = YOLO_DATASET_ROOT / "labels/train"
+DEST_META = YOLO_DATASET_ROOT
 TEMP_UNZIP_DIR = Path("temp/ls_extract")
 
 # Step 1: Find latest zip
@@ -56,4 +59,8 @@ for extra in ["classes.txt", "notes.json"]:
         shutil.move(str(match[0]), DEST_META / match[0].name)
         print(f"📄 Copied {extra}")
 
-print("✅ Import completed successfully!")
+print("✅ YOLO dataset import completed successfully!")
+
+# Step 6: Auto-convert polygon to OBB
+print("🔁 Converting polygon labels to YOLOv8 OBB format...")
+subprocess.run([sys.executable, "utils/convert_polygon_to_obb.py"])

@@ -20,6 +20,57 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+# === STEP 0.5: Train Model ===
+from pathlib import Path
+
+dataset_root = Path("data/yolo_merged")
+dataset_yaml = "yolo_merged.yaml"
+
+initial_images = Path("data/yolo_dataset/images/train")
+initial_labels = Path("data/yolo_dataset/labels/train")
+
+if any(initial_images.glob("*")) and any(initial_labels.glob("*.txt")):
+    print(
+        "📦 Detected initial Label Studio dataset. Training from yolo_dataset directly..."
+    )
+
+    dataset_yaml = "yolo_dataset.yaml"
+
+    # clean backups
+    for txt_file in initial_labels.glob("*.bak"):
+        txt_file.unlink()
+
+    print("🚀 Starting YOLO training with initial dataset...")
+    train_args = [
+        "yolo",
+        "task=obb",
+        "mode=train",
+        f"model=yolov8n-obb.pt",
+        f"data={dataset_yaml}",
+        "imgsz=960",
+        "device=0",
+        "name=train",
+        "resume=False",
+        "val=False",
+        "epochs=5",
+    ]
+    subprocess.run(train_args)
+
+    # move to yolo_dataset_used
+    USED_PATH = Path("data/yolo_dataset_used")
+    if USED_PATH.exists():
+        shutil.rmtree(USED_PATH)
+    shutil.move("data/yolo_dataset", USED_PATH)
+    print("✅ Renamed yolo_dataset → yolo_dataset_used")
+
+    # re-run pipeline from here
+    print("🔁 Restart the script to continue active learning phase from merged labels")
+    sys.exit(0)
+
+else:
+    print("⚠️ No initial dataset found. Proceeding with active learning flow...")
+    dataset_yaml = "yolo_merged.yaml"
+
 # === CLEAN FOLDERS IF NEEDED ===
 if args.clean:
     print("🧹 Cleaning dataset folders before starting pipeline...")
@@ -49,13 +100,13 @@ def get_latest_model_path(base_dir="runs/obb"):
     raise FileNotFoundError("❌ No valid best.pt found in any run folder.")
 
 
-if CONFIG_MODEL_PATH.exists():
-    MODEL_PATH = CONFIG_MODEL_PATH
-    print(f"📌 MODEL USED: {MODEL_PATH}")
-else:
-    print(f"⚠️ Configured MODEL_PATH not found: {CONFIG_MODEL_PATH}")
+try:
     MODEL_PATH = get_latest_model_path()
-    print(f"📌 Falling back to: {MODEL_PATH}")
+    print(f"📌 MODEL USED: {MODEL_PATH}")
+except Exception as e:
+    print(f"❌ No trained model found: {e}")
+    sys.exit(1)
+
 
 # === STEP 2: Launch Review Tool ===
 print("🔍 Launching manual_review.py...")
@@ -82,6 +133,28 @@ if TRAIN_DIR.exists():
     shutil.move(str(TRAIN_DIR), str(BACKUP_DIR))
     print("🔄 Renamed train → previous-train")
 
+# === CHECK FOR VALID LABELS ===
+valid_labels = [f for f in merged_labels.glob("*.txt") if f.stat().st_size > 0]
+print(f"🔍 Valid label files found: {len(valid_labels)}")
+
+# also check for matching images
+unmatched_labels = []
+for label_file in valid_labels:
+    image_file = merged_images / (label_file.stem + ".jpg")
+    if not image_file.exists():
+        unmatched_labels.append(label_file.name)
+
+if unmatched_labels:
+    print("❌ Some labels do not have matching images:")
+    for f in unmatched_labels:
+        print(f"  - {f}")
+    print("⚠️ Please fix missing image files before training.")
+    sys.exit(1)
+
+if len(valid_labels) == 0:
+    print("❌ No valid label files found. Training skipped.")
+    sys.exit(1)
+
 # === STEP 5: Train Model ===
 # Delete any leftover .bak files from label corrections
 for txt_file in merged_labels.glob("*.bak"):
@@ -97,7 +170,7 @@ else:
         "task=obb",
         "mode=train",
         f"model={str(MODEL_PATH)}",
-        f"data={YOLO_DATASET_YAML}",
+        f"data={dataset_yaml}",
         "imgsz=960",
         "device=0",
         "name=train",
