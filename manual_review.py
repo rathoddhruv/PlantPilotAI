@@ -17,8 +17,21 @@ if platform.system() == "Windows":
 
 from config_loader import *
 
-default = DEFAULT_OBB_MODEL
-model_path = default
+# 🔍 load latest best.pt dynamically
+from glob import glob
+
+detect_weights = sorted(
+    glob("runs/detect/**/weights/best.pt", recursive=True),
+    key=lambda x: Path(x).stat().st_mtime,
+    reverse=True,
+)
+if not detect_weights:
+    print("❌ no trained model found in runs/detect")
+    exit()
+
+model_path = Path(detect_weights[0])
+print(f"✅ using latest model: {model_path}")
+
 
 if not model_path.exists():
     print(f"Model path does not exist: {model_path}")

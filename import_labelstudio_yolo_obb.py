@@ -7,7 +7,7 @@ YOLO_DATASET_ROOT = Path("data/yolo_dataset")
 DEST_IMAGES = YOLO_DATASET_ROOT / "images/train"
 DEST_LABELS = YOLO_DATASET_ROOT / "labels/train"
 DEST_META = YOLO_DATASET_ROOT
-TEMP_UNZIP_DIR = YOLO_DATASET_ROOT / "temp/ls_extract"
+TEMP_UNZIP_DIR = Path("temp/ls_extract")
 
 # Step 1: Find latest zip
 zip_files = sorted(EXPORTS_DIR.glob("*.zip"), key=lambda z: z.stat().st_mtime, reverse=True)
@@ -45,22 +45,16 @@ DEST_LABELS.mkdir(parents=True, exist_ok=True)
 
 for file in src_images.glob("*"):
     if file.is_file():
-        shutil.move(str(file), DEST_IMAGES / file.name)
+        shutil.copy2(str(file), DEST_IMAGES / file.name)
 
 for file in src_labels.glob("*.txt"):
-    with open(file, "r") as f:
-        lines = f.readlines()
-    # Keep only lines with 5 values (YOLO box format)
-    valid_lines = [line for line in lines if len(line.strip().split()) == 5]
-    if valid_lines:
-        with open(DEST_LABELS / file.name, "w") as out:
-            out.writelines(valid_lines)
+    shutil.copy2(str(file), DEST_LABELS / file.name)
 
 # Step 5: Optional meta files
 for extra in ["classes.txt", "notes.json"]:
     match = list(TEMP_UNZIP_DIR.rglob(extra))
     if match:
-        shutil.move(str(match[0]), DEST_META / match[0].name)
+        shutil.copy2(str(match[0]), DEST_META / match[0].name)
         print(f"📄 Copied {extra}")
 
 print("✅ YOLO dataset import completed successfully!")

@@ -25,6 +25,8 @@ DEFAULT_DETECT_MODEL = get_path(
 )
 DEFAULT_OBB_MODEL = get_path("DEFAULT_OBB_MODEL", "runs/obb/train/weights/best.pt")
 MODEL_PATH = get_path("MODEL_PATH", "runs/obb/train/weights/best.pt")  # universal
+# DEFAULT_OBB_MODEL = get_path("DEFAULT_OBB_MODEL", "runs/obb/train/weights/best.pt")
+# MODEL_PATH = get_path("MODEL_PATH", "runs/obb/train/weights/best.pt")  # universal
 
 # === INPUT + REVIEW PATHS ===
 TEST_IMAGE_FOLDER = get_path("TEST_IMAGE_FOLDER", "C:/Data/Projects/test-1")

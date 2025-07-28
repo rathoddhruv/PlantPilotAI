@@ -50,7 +50,7 @@ if any(initial_images.glob("*")) and valid_initial_labels:
         "name=train",
         "resume=False",
         "val=False",
-        "epochs=5",
+        "epochs=20",
     ]
     subprocess.run(train_args)
 
