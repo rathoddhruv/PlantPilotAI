@@ -17,7 +17,6 @@ if platform.system() == "Windows":
 
 from config_loader import *
 
-# 🔍 load latest best.pt dynamically
 from glob import glob
 
 detect_weights = sorted(
@@ -32,12 +31,11 @@ if not detect_weights:
 model_path = Path(detect_weights[0])
 print(f"✅ using latest model: {model_path}")
 
-
 if not model_path.exists():
     print(f"Model path does not exist: {model_path}")
     exit()
 
-model = YOLO(model_path, task="obb")
+model = YOLO(model_path)
 
 image_paths = (
     list(Path(TEST_IMAGE_FOLDER).glob("*.jpg"))
@@ -59,7 +57,6 @@ MANUAL_REVIEW_DIR.mkdir(exist_ok=True)
 WRONG_LABEL_DIR.mkdir(exist_ok=True)
 MERGED_DATASET_ROOT.joinpath("images/train").mkdir(parents=True, exist_ok=True)
 
-
 def restore_terminal():
     if platform.system() == "Windows" and win32gui and win32con:
         try:
@@ -67,7 +64,6 @@ def restore_terminal():
             win32gui.SetForegroundWindow(hwnd)
         except Exception:
             pass
-
 
 summary = []
 current_index = 0
@@ -85,7 +81,7 @@ while current_index < len(image_paths):
     )
     result = results[0]
     names = result.names
-    boxes = result.obb
+    boxes = result.boxes
     row = [img_path.name]
     detected_labels = []
     detections = []
@@ -93,7 +89,7 @@ while current_index < len(image_paths):
     if boxes and boxes.cls.numel() > 0:
         classes = boxes.cls.tolist()
         scores = boxes.conf.tolist()
-        box_data = boxes.xywhr.tolist()
+        box_data = boxes.xywh.tolist()
         detections = list(zip(classes, scores, box_data))
 
     img_display = Path(result.save_dir) / img_path.name
@@ -113,7 +109,6 @@ while current_index < len(image_paths):
             cv2.waitKey(1)
             restore_terminal()
 
-    # 🔥 fix: this must be outside the `except`
     if not detections:
         print("No detections. Label manually? (y/n): ", end="")
         if input().lower() == "y":
@@ -123,12 +118,9 @@ while current_index < len(image_paths):
             print("deleting image because no objects marked...")
             try:
                 Path(img_path).unlink()
-                # 👇 also delete from merged dataset folder if it exists
                 merged_train_img = MERGED_DATASET_ROOT / "images/train" / img_path.name
                 if merged_train_img.exists():
                     merged_train_img.unlink()
-
-                # 👇 delete any stale label files
                 for label_dir in [ACTIVE_LABEL_DIR, WRONG_LABEL_DIR]:
                     label_file = label_dir / f"{img_path.stem}.txt"
                     if label_file.exists():
@@ -169,7 +161,7 @@ while current_index < len(image_paths):
             detected_labels.append(f"{label} ✅")
         elif ans in ["w", "wrong"]:
             detections.pop(idx)
-            idx -= 1  # stay on same index since list is now shorter
+            idx -= 1
             detected_labels.append(f"{label} ❌")
         elif ans == "y1":
             for i, (cid, _, b) in enumerate(detections):
@@ -196,7 +188,6 @@ while current_index < len(image_paths):
         idx += 1
 
     if idx >= len(detections):
-        # 💾 Save updated labels (after filtering with w/w1)
         label_file_path = ACTIVE_LABEL_DIR / f"{img_path.stem}.txt"
         if detections:
             with open(label_file_path, "w") as f:
@@ -205,7 +196,6 @@ while current_index < len(image_paths):
                     f.write(f"{int(cls_id)} {' '.join(map(str, box))}\n")
             shutil.copy(str(img_path), MERGED_DATASET_ROOT / "images/train")
         else:
-            # No valid detections left — optional manual review or skip
             print("No valid detections left. Keeping image without label.")
             label_file_path.unlink(missing_ok=True)
 
@@ -214,10 +204,8 @@ while current_index < len(image_paths):
         current_index += 1
         cv2.destroyAllWindows()
 
-
 print("\nSummary:")
 print(tabulate(summary, headers=["Image", "Detections"], tablefmt="grid"))
-
 
 def draw_labels_with_full_conf(image_path, detections, names, output_path):
     import cv2
@@ -227,16 +215,13 @@ def draw_labels_with_full_conf(image_path, detections, names, output_path):
         label = names[int(cls_id)]
         conf_text = f"{label} ({conf * 100:.6f}%)"
 
-        cx, cy, w, h, angle = box
-        # Estimate rectangle corners (you can improve this later with rotation)
+        cx, cy, w, h = box[:4]
         x = int(cx - w / 2)
         y = int(cy - h / 2)
         x2 = int(cx + w / 2)
         y2 = int(cy + h / 2)
 
-        # Draw box
         cv2.rectangle(image, (x, y), (x2, y2), (0, 255, 0), 2)
-        # Draw label
         cv2.putText(
             image,
             conf_text,

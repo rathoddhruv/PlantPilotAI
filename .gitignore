@@ -19,8 +19,8 @@ runs/**/*
 !runs/detect/
 !runs/detect/**/
 !runs/detect/**/best.pt
-!runs/obb/
-!runs/obb/**/best.pt
+!runs/detect/
+!runs/detect/**/best.pt
 
 # === YOLO Experiments You Keep ===
 !YOLO11-obb/

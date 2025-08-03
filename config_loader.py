@@ -21,12 +21,12 @@ ORIGINAL_LABELS = get_path("ORIGINAL_LABELS", "data/yolo_dataset/labels/train")
 
 # === MODEL PATHS (all same) ===
 DEFAULT_DETECT_MODEL = get_path(
-    "DEFAULT_DETECT_MODEL", "runs/obb/train/weights/best.pt"
+    "DEFAULT_DETECT_MODEL", "runs/detect/train/weights/best.pt"
 )
-DEFAULT_OBB_MODEL = get_path("DEFAULT_OBB_MODEL", "runs/obb/train/weights/best.pt")
-MODEL_PATH = get_path("MODEL_PATH", "runs/obb/train/weights/best.pt")  # universal
-# DEFAULT_OBB_MODEL = get_path("DEFAULT_OBB_MODEL", "runs/obb/train/weights/best.pt")
-# MODEL_PATH = get_path("MODEL_PATH", "runs/obb/train/weights/best.pt")  # universal
+DEFAULT_MODEL = get_path("DEFAULT_MODEL", "runs/detect/train/weights/best.pt")
+MODEL_PATH = get_path("MODEL_PATH", "runs/detect/train/weights/best.pt")  # universal
+# DEFAULT_MODEL = get_path("DEFAULT_MODEL", "runs/detect/train/weights/best.pt")
+# MODEL_PATH = get_path("MODEL_PATH", "runs/detect/train/weights/best.pt")  # universal
 
 # === INPUT + REVIEW PATHS ===
 TEST_IMAGE_FOLDER = get_path("TEST_IMAGE_FOLDER", "C:/Data/Projects/test-1")
@@ -61,7 +61,7 @@ CLASS_MAP_REVERSE = {idx: name for name, idx in CLASS_MAP.items()}
 # === EXPORT ===
 __all__ = [
     "DEFAULT_DETECT_MODEL",
-    "DEFAULT_OBB_MODEL",
+    "DEFAULT_MODEL",
     "MODEL_PATH",
     "TEST_IMAGE_FOLDER",
     "CLASS_FILE",

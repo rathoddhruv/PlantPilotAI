@@ -20,7 +20,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# === STEP 0.5: Train Model ===
+# === STEP 0.5: Train Model FROM LABEL STUDIO ===
 dataset_root = Path("data/yolo_merged")
 dataset_yaml = "yolo_merged.yaml"
 
@@ -43,14 +43,14 @@ if any(initial_images.glob("*")) and valid_initial_labels:
         "yolo",
         "task=detect",
         "mode=train",
-        "model=yolov8n.pt",
-        f"data={dataset_yaml}",
+        "model=yolov8s.pt",
+        f"data={YOLO_DATASET_YAML}",
         "imgsz=960",
         "device=0",
         "name=train",
         "resume=False",
         "val=False",
-        "epochs=20",
+        "epochs=50",
     ]
     subprocess.run(train_args)
 
@@ -145,6 +145,9 @@ for txt_file in merged_labels.glob("*.bak"):
     txt_file.unlink()
     print(f"🗑️ Deleted leftover backup file: {txt_file.name}")
 
+print("🔧 Normalizing label coordinates before training...")
+subprocess.run([sys.executable, "utils/fix_non_normalized_labels.py"], check=True)
+
 if not train_images or not train_labels:
     print("❌ No training data found. Skipping training.")
 else:
@@ -160,7 +163,7 @@ else:
         "name=train",
         "resume=False",
         "val=False",
-        "epochs=20",
+        "epochs=60",
     ]
     print("🚀 Running YOLO training...")
     result = subprocess.run(train_args)

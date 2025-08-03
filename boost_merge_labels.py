@@ -24,7 +24,6 @@ merged_labels = merged_root / "labels/train"
 for path in [merged_images, merged_labels]:
     path.mkdir(parents=True, exist_ok=True)
 
-
 # === COPY ORIGINAL IMAGES AND LABELS ===
 #
 # Start from the original YOLO dataset defined in ``ORIGINAL_IMAGES`` and
@@ -33,13 +32,10 @@ for path in [merged_images, merged_labels]:
 # layered.
 image_files = list(ORIGINAL_IMAGES.glob("*"))
 for img_file in image_files:
-    # Copy image
     shutil.copy(img_file, merged_images / img_file.name)
-    # Copy label if it exists
     label_file = ORIGINAL_LABELS / f"{img_file.stem}.txt"
     if label_file.exists():
         shutil.copy(label_file, merged_labels / label_file.name)
-
 
 # === COPY ACTIVE LABELS AND MATCHED IMAGES ===
 #
@@ -50,63 +46,45 @@ for img_file in image_files:
 # from their respective folders to keep things tidy.
 active_files = list(ACTIVE_LABEL_DIR.glob("*.txt"))
 copied_images = 0
-
 for label_path in active_files:
-    # Copy approved label into merged labels directory
     shutil.copy(label_path, merged_labels / label_path.name)
-
-    # Find matching image in the test folder by checking common image
-    # extensions. Once found, copy it into merged images directory and remove
-    # it from the test folder. This ensures that images are not processed
-    # twice in subsequent iterations.
     for ext in [".jpg", ".jpeg", ".png"]:
         image_path = TEST_IMAGE_FOLDER / f"{label_path.stem}{ext}"
         if image_path.exists():
             shutil.copy(image_path, merged_images / image_path.name)
-            image_path.unlink()  # delete from test folder
+            image_path.unlink()
             copied_images += 1
             break
-
-    # Remove active label file to avoid reusing it on next run
     label_path.unlink()
-
 
 # === COPY WRONG LABELS AS NEGATIVE IMAGES ===
 #
 # Files in ``WRONG_LABEL_DIR`` represent detections that the user marked as
 # incorrect (false positives). According to Ultralytics guidance, training with
 # background images improves a model's ability to reduce false positives by
-# teaching it what NOT to detect【561117542216794†L270-L290】. To incorporate these
-# examples, we copy the corresponding image into ``merged_images`` and create an
-# **empty** annotation file in ``merged_labels``. An empty label file signals
-# that the image contains no objects, reinforcing it as a negative sample【561117542216794†L384-L390】.
+# teaching it what NOT to detect. To incorporate these examples, we copy the
+# corresponding image into ``merged_images`` and create an **empty** annotation
+# file in ``merged_labels``. An empty label file signals that the image contains
+# no objects, reinforcing it as a negative sample.
 wrong_files = list(WRONG_LABEL_DIR.glob("*.txt"))
 negative_copied = 0
-
 for wrong_path in wrong_files:
-    # Write an empty label file for this negative image
     empty_label_path = merged_labels / wrong_path.name
     empty_label_path.parent.mkdir(parents=True, exist_ok=True)
     empty_label_path.write_text("")
-
-    # Copy the corresponding image from the test folder into the merged images
     for ext in [".jpg", ".jpeg", ".png"]:
         image_path = TEST_IMAGE_FOLDER / f"{wrong_path.stem}{ext}"
         if image_path.exists():
             dest_img = merged_images / image_path.name
-            # Avoid overwriting if this image was already copied as a positive
             if not dest_img.exists():
                 shutil.copy(image_path, dest_img)
             try:
-                image_path.unlink()  # remove from test folder
+                image_path.unlink()
             except Exception:
                 pass
             negative_copied += 1
             break
-
-    # Remove wrong label file after processing
     wrong_path.unlink()
-
 
 # === DATASET MERGE SUMMARY ===
 print(
@@ -118,7 +96,6 @@ print(
 print(f"Copied {negative_copied} negative images from wrong labels")
 print("Cleaned up used active and wrong labels as well as test images")
 
-
 # === GENERATE YOLO DATASET YAML ===
 #
 # After merging all sources of data, construct a YAML file that describes the
@@ -128,23 +105,20 @@ print("Cleaned up used active and wrong labels as well as test images")
 dataset_yaml = {
     "path": str(merged_root),
     "train": "images/train",
-    "val": "images/train",  # still required by YOLO CLI, even if val == train
+    "val": "images/train",
     "names": {idx: name for idx, name in CLASS_MAP_REVERSE.items()},
 }
 
-# If there are no images in the merged dataset, alert the user and exit
 merged_images_dir = merged_root / "images/train"
 if not any(merged_images_dir.glob("*")):
     print("❌ No merged training images found. Exiting.")
     exit(1)
 
-# Write updated YAML configuration
 with open(YOLO_DATASET_YAML, "w") as f:
     yaml.dump(dataset_yaml, f, sort_keys=False)
 
 print(f"yolo_dataset.yaml updated at {YOLO_DATASET_YAML}")
 print("Dataset ready at:", merged_root)
-
 
 # === FIX CORRUPT LABELS ===
 #
@@ -158,7 +132,6 @@ for label_file in LABEL_FOLDER.glob("*.txt"):
     lines = label_file.read_text().strip().splitlines()
     cleaned = []
     corrupted = False
-
     for line in lines:
         parts = line.strip().split()
         if len(parts) != 5:
@@ -169,7 +142,6 @@ for label_file in LABEL_FOLDER.glob("*.txt"):
             cleaned.append(" ".join(map(str, floats)))
         except ValueError:
             corrupted = True
-
     if corrupted:
         backup = label_file.with_suffix(".bak")
         if backup.exists():
